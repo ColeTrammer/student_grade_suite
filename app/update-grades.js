@@ -13,7 +13,7 @@ module.exports = (user, body, done) => {
                 return done(err)
             if (!gradesInDb.classes.every((course) => {
                 return course.assignments.length === grades.classes.find((c) => course.name === c.name).assignments.length
-            }) && grades.every((course) => course !== null)) {
+            }) && grades.classes.every((course) => course !== null)) {
                 gradesInDb.classes = gradesInDb.classes.map((course) => {
                     const newGrades = grades.classes.find((c) => course.name === c.name)
                     if (course.assignments.length !== newGrades.assignments.length) {
