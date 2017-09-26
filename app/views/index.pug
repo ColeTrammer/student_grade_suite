@@ -1,0 +1,37 @@
+extends layout.pug
+
+block head
+    link(rel="stylesheet", href="/public/styles.css")
+
+block content
+    #add-assignment.modal.fade(tabindex="-1")
+        .modal-dialog(role="document")
+            .modal-content
+                .modal-header
+                    h5.modal-title Add Assignment
+                    button.close(type="button", data-dismiss="modal", aria-label="Close")
+                        span(aria-hidden="true") ×
+                .modal-body
+                    form#assignment-form
+                        .form-group
+                            label(for="classSelect") Class:
+                            select#classSelect.form-control(name="class")
+                        .form-group
+                            label(for="nameInput") Name:
+                            input#nameInput.form-control(type="text", name="name", placeholder="Name")
+                        .form-group
+                            label(for="typeSelect") Type:
+                            select#typeSelect.form-control(name="type")
+                        .form-group
+                            label(for="pointsInput") Points:
+                            input#pointsInput.form-control(type="text", name="points", value="0")
+                        .form-group
+                            label(for="possibleInput") Points Possible:
+                            input#possibleInput.form-control(type="text", name="possible", placeholder="0")
+                .modal-footer
+                    input#add.btn.btn-primary(type="submit", form="assignment-form", value="Add")
+                    button.btn.btn-secondary(type="button", data-dismiss="modal") Cancel
+    h1.mb-0.text-center Grades
+    
+block footer
+    script(src="/public/client.js")

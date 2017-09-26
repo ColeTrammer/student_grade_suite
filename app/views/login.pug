@@ -1,0 +1,30 @@
+extends layout.pug
+
+block head
+    link(rel="stylesheet", href="/public/login.css")
+
+block content
+    if message
+        div.alert.alert-warning.alert-dismissible.fade.show(role="alert")
+            button.close(type="button" data-dismiss="alert" aria-label="Close")
+                span(aria-hidden="true") &times;
+            p= message
+    .card
+        .card-header
+            h1.bl-0.text-center Login to View Your Grades
+        .card-body
+            form(action="/" method="POST" enctype="application/x-www-form-urlencoded")
+                .form-group
+                    label(for="username") Username:
+                    input.form-control#username(type="text" name="username")
+                .form-group
+                    label(for="password") Password:
+                    input.form-control#password(type="password" name="password")
+                .form-group
+                    label(for="domain") Domain:
+                    input.form-control#domain(type="text" name="domain" value="sis.powayusd.com")
+                .form-check
+                    label.form-check-label 
+                        input.form-check-input(type="checkbox" name="refresh" checked) 
+                        |  Update grades
+                input.btn.btn-primary(type="submit" value="Log In")

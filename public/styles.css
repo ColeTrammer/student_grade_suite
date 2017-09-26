@@ -1,0 +1,99 @@
+a {
+    color: inherit;
+}
+
+h1 {
+    margin-top: 1.5%;
+}
+
+table {
+    margin-bottom: 0!important;
+}
+
+#main {
+    width: 90%!important;
+    margin: 0 auto;
+}
+
+.min-group {
+    width: 250px;
+    margin-left: auto;
+    margin-top: 0;
+    margin-right: 1%;
+    margin-bottom: 0;
+}
+
+.points {
+    width: 120px;
+    margin: 0 auto;
+}
+
+.class-name-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+a:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+table a:hover {
+    text-decoration: underline;
+}
+
+a:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.plus-text {
+    vertical-align: text-top;
+    line-height: 1;
+}
+
+.grade-header-1 {
+    margin-left: 1%;
+    margin-bottom: 0;
+}
+
+.assignments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1.5% 0;
+}
+
+.modal-footer {
+    justify-content: flex-start;
+}
+
+table {
+    margin-left: 1%;
+    margin-right: 1%;
+    width: 98%!important;
+}
+
+.header {
+    margin: 1.5% 0;
+    margin-left: 1%;
+}
+
+.plus {
+    color: white;
+    font-size: 26px;
+    background-color: black;
+    padding: 0;
+    height: 30px;
+    width: 30px;
+    margin-left: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 1%;
+    border: none;
+}
+
+.class {
+    margin: 2%;
+}

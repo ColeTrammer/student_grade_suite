@@ -1,0 +1,41 @@
+{
+  "name": "student_grade_suite",
+  "version": "1.0.0",
+  "description": "lets one view grades and modify them to see what they need to get to achieve some grade",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "engines": {
+    "node": "8.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ColeTrammer/student_grade_suite.git"
+  },
+  "keywords": [
+    "grades"
+  ],
+  "author": "ColeTrammer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ColeTrammer/student_grade_suite/issues"
+  },
+  "homepage": "https://github.com/ColeTrammer/student_grade_suite#readme",
+  "dependencies": {
+    "async": "^2.5.0",
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.18.1",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.3",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.3",
+    "express-session": "^1.15.5",
+    "jsdom": "^11.2.0",
+    "mongoose": "^4.11.12",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "pug": "^2.0.0-rc.4"
+  }
+}
