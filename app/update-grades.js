@@ -24,11 +24,11 @@ module.exports = (user, body, done) => {
                             total: course.total,
                             date: new Date().getTime()
                         })
-                        course.assignments = newGrades.assignments
-                        course.gradeSummary = newGrades.gradeSummary
-                        course.total = newGrades.total
-                        return course
                     }
+                    course.assignments = newGrades.assignments
+                    course.gradeSummary = newGrades.gradeSummary
+                    course.total = newGrades.total
+                    return course
                 })
                 gradesInDb.markModified("classes")
                 gradesInDb.save(() => {
