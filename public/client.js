@@ -199,8 +199,8 @@ $(document).ready(function () {
         sort(grade.gradeSummary, grade.period + "-gradeSummary");
         document.getElementById("grades" + grade.period + "-body").innerHTML = "<div class=\"assignments-header\">\n" + 
             "<h3 class=\"grade-header-1\">Assignments</h3>" +
-            "<button class=\"btn plus\" data-toggle=\"modal\" data-target=\"#add-assignment\" data-period=\"" + grade.period + "\">" +
-                "<span class=\"plus-text\">+</span>" + 
+            "<button class=\"btn plus\" data-toggle=\"modal\" id=\"plus-" + grade.period + "\" data-target=\"#add-assignment\" data-period=\"" + grade.period + "\">" +
+                "<span class=\"plus-text\" data-period=\"" + grade.period + "\">+</span>" + 
             "</button>\n" + 
             "</div>\n" + 
             generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, grade.period + "-assignments", true) + "\n" +
@@ -261,6 +261,7 @@ $(document).ready(function () {
             processGrade(course);
             renderGrade(course);
         });
+        $("#main-percent-" + grade.period).html(grade.total.percent + "%")
     }
 
     function render() {
@@ -269,7 +270,7 @@ $(document).ready(function () {
             main.innerHTML += "<div class=\"card class text-left\">\n" +
                 "<div class=\"card-header\" data-toggle=\"collapse\" href=\"#grades" + grade.period + "\">\n" +
                     "<div class=\"class-name-header\"><h2 class=\"mb-0\"><a href=\"#\" onclick=\"return false\">" + grade.period + ": " + grade.name + "</a></h1>\n" +
-                    "<h2 class=\"mb-0\">" + grade.total.percent + "%</h2>" +
+                    "<h2 id=\"main-percent-" + grade.period + "\" class=\"mb-0\">" + grade.total.percent + "%</h2>" +
                 "</div></div>\n" +
                 "<div id=\"grades" + grade.period + "\" class=\"collapse\" data-parent=\"#main\">\n" +
                     "<div id=\"grades" + grade.period + "-body\">\n</div>\n</div>\n</div>\n";
@@ -293,7 +294,7 @@ $(document).ready(function () {
                 return acc + ("<option value=\"" + s.name + "\">" + s.name + "</option>");
             }, ""));
         });
-        modal.find("#assignment-form").on("submit", function (e) {
+        function handleSubmit(e) {
             e.preventDefault();
             var values = {};
             $('#assignment-form').serializeArray().forEach(function (field) {
@@ -317,12 +318,14 @@ $(document).ready(function () {
                     return s.name === values.type;
                 });
 
-                grade = processGrade(course);
+                processGrade(course);
                 renderGrade(course);
 
                 modal.modal("hide");
             }
-        });
+            return false
+        }
+        modal.find("#assignment-form").on("submit", handleSubmit);
     }
 
     var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
@@ -376,9 +379,9 @@ $(document).ready(function () {
             course.gradeSummary.sort(function (a, b) {
                 return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
             });
-        });
-        modalInit();
+        });        
         render();
+        modalInit();
     }
 });
 
