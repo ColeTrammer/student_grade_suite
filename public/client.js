@@ -233,6 +233,7 @@ $(document).ready(function () {
             var points = parseFloat(target.val());
             if (!isNaN(points)) {
                 assignment.points = points;
+                assignment.implicit = false;
                 processGrade(course);
             }
             renderGrade(course);
