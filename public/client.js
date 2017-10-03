@@ -307,12 +307,16 @@ $(document).ready(function () {
                 var course = grades.classes.find(function (course) {
                     return course.name === values.class;
                 });
+                function zero(num) {
+                    return (num < 10 ? "0" : "") + num
+                } 
                 course.assignments.unshift({
                     name: values.name,
                     type: values.type,
                     points: values.points,
                     possible: values.possible,
                     hidden: ">False<",
+                    date: zero(new Date().getMonth() + 1) + "/" + zero(new Date().getDate()) + "/" + new Date().getFullYear(),
                     implicit: false
                 });
                 var category = course.gradeSummary.find(function (s) {
@@ -358,13 +362,17 @@ $(document).ready(function () {
             key: "hidden",
             display: "Hidden"
         });
+        grades.assignmentsKeyMap.splice(1, 0, {
+            key: "date",
+            display: "Date"
+        })
         assignmentsKeyMap = grades.assignmentsKeyMap;
         gradeSummaryKeyMap = grades.gradeSummaryKeyMap;
         totalsKeyMap = grades.totalsKeyMap;
         grades.classes.forEach(function (course) {
             tableOrder[course.period + "-assignments"] = {
-                prop: "name",
-                order: "down"
+                prop: "date",
+                order: "up"
             };
             tableOrder[course.period + "-gradeSummary"] = {
                 prop: "name",
@@ -374,9 +382,6 @@ $(document).ready(function () {
                 prop: "none",
                 order: "none"
             };
-            course.assignments.sort(function (a, b) {
-                return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
-            });
             course.gradeSummary.sort(function (a, b) {
                 return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
             });
