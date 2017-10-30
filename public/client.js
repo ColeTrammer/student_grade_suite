@@ -380,7 +380,6 @@ $(document).ready(function () {
                 assignment.hidden = assignment.implicit ? ">True<" : ">False<";
             });
             course.previous = generatePreviousMap(course);
-            console.log(course)
             return course;
         });
         grades = data;
