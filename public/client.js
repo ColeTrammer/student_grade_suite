@@ -262,7 +262,13 @@ $(document).ready(function () {
             processGrade(course);
             renderGrade(course);
         });
-        $("#main-percent-" + grade.period).html(grade.total.percent + "%")
+        function getDifference(grade) {
+            var difference = grade.total.percent - (grade.previous && grade.previous[1] && grade.previous[1].percent) || 0;
+            var negative = difference < 0;
+            var positive = difference > 0;
+            return "<h4 class=\"" + (negative ? "negative" : positive ? "positive" : "") + "\">" + (negative ? "-" : "+") + Math.round(Math.abs(difference) * 1000) / 1000 + "%" + "</h4>";
+        }
+        $("#main-percent-" + grade.period).html("<h4>" + grade.total.percent + "%" + "</h4>" + getDifference(grade));
     }
 
     function render() {
@@ -271,7 +277,7 @@ $(document).ready(function () {
             main.innerHTML += "<div class=\"card class text-left\">\n" +
                 "<div class=\"card-header\" data-toggle=\"collapse\" href=\"#grades" + grade.period + "\">\n" +
                     "<div class=\"class-name-header\"><h2 class=\"mb-0\"><a href=\"#\" onclick=\"return false\">" + grade.period + ": " + grade.name + "</a></h1>\n" +
-                    "<h2 id=\"main-percent-" + grade.period + "\" class=\"mb-0\">" + grade.total.percent + "%</h2>" +
+                    "<div id=\"main-percent-" + grade.period + "\" class=\"mb-0 grade-percent\">" + grade.total.percent + "%</h2>" +
                 "</div></div>\n" +
                 "<div id=\"grades" + grade.period + "\" class=\"collapse\" data-parent=\"#main\">\n" +
                     "<div id=\"grades" + grade.period + "-body\">\n</div>\n</div>\n</div>\n";
@@ -333,15 +339,38 @@ $(document).ready(function () {
         modal.find("#assignment-form").on("submit", handleSubmit);
     }
 
-    var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
-
-    $.ajax({
-        url: apiUrl,
-        error: function error(xhr, status, err) {
-            $("#main").html(status + JSON.stringify(err));
-        },
-        success: initDisplay
-    });
+    function generatePreviousMap(course) {
+        course = JSON.parse(JSON.stringify(course));
+        var assignments = course.assignments.map(function(assignment) {
+            var month = assignment.date.substring(0, 2) - 1;
+            var day = +assignment.date.substring(3, 5);
+            var year = +assignment.date.substring(6);
+            assignment.date = new Date(year, month, day);
+            return assignment;
+        }).reduce(function(acc, assignment) {
+            if (acc[acc.length - 1] && acc[acc.length - 1][0] && (+assignment.date === +acc[acc.length - 1][0].date)) {
+                acc[acc.length - 1].push(assignment);
+            } else {
+                acc.push([assignment]);
+            }
+            return acc;
+        }, []);
+        var previous = [];
+        var noGradeSummary = course.gradeSummary === "none";
+        course.assignments = [];
+        assignments.forEach(function(group) {
+            group.forEach(function(assignment) {
+                course.assignments.push(assignment);
+            });
+            var currentTotal = processGrade(course).total;
+            previous.unshift(currentTotal);
+            previous[0].date = group[0].date;
+            if (noGradeSummary) {
+                course.gradeSummary = "none";
+            }
+        })
+        return previous;
+    }
 
     function initDisplay(data) {
         data.classes = data.classes.sort(function (a, b) {
@@ -350,6 +379,8 @@ $(document).ready(function () {
             course.assignments.map(function (assignment) {
                 assignment.hidden = assignment.implicit ? ">True<" : ">False<";
             });
+            course.previous = generatePreviousMap(course);
+            console.log(course)
             return course;
         });
         grades = data;
@@ -389,5 +420,15 @@ $(document).ready(function () {
         render();
         modalInit();
     }
+
+    var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
+
+    $.ajax({
+        url: apiUrl,
+        error: function error(xhr, status, err) {
+            $("#main").html(status + JSON.stringify(err));
+        },
+        success: initDisplay
+    });
 });
 

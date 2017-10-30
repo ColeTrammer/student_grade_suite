@@ -6,6 +6,18 @@ h1 {
     margin-top: 1.5%;
 }
 
+.positive {
+    color: green;
+}
+
+.negative {
+    color: #DD0000;
+}
+
+.grade-percent {
+    text-align: right;
+}
+
 table {
     margin-bottom: 0!important;
 }
