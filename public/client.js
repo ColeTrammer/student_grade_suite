@@ -263,7 +263,7 @@ $(document).ready(function () {
             renderGrade(course);
         });
         function getDifference(grade) {
-            var difference = grade.total.percent - (grade.previous && grade.previous[1] && grade.previous[1].percent) || 0;
+            var difference = grade.total.percent - (grade.previous && grade.previous[0] && grade.previous[0].percent) || 0;
             var negative = difference < 0;
             var positive = difference > 0;
             return "<h4 class=\"" + (negative ? "negative" : positive ? "positive" : "") + "\">" + (negative ? "-" : "+") + Math.round(Math.abs(difference) * 1000) / 1000 + "%" + "</h4>";
@@ -348,10 +348,10 @@ $(document).ready(function () {
             assignment.date = new Date(year, month, day);
             return assignment;
         }).reduce(function(acc, assignment) {
-            if (acc[acc.length - 1] && acc[acc.length - 1][0] && (+assignment.date === +acc[acc.length - 1][0].date)) {
-                acc[acc.length - 1].push(assignment);
+            if (acc[0] && (+assignment.date === +acc[0][0].date)) {
+                acc[0].push(assignment);
             } else {
-                acc.push([assignment]);
+                acc.unshift([assignment]);
             }
             return acc;
         }, []);
@@ -368,8 +368,8 @@ $(document).ready(function () {
             if (noGradeSummary) {
                 course.gradeSummary = "none";
             }
-        })
-        return previous;
+        });
+        return previous.slice(1);
     }
 
     function initDisplay(data) {
