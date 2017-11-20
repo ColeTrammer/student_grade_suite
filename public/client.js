@@ -5,7 +5,6 @@ $(document).ready(function () {
     var percentTotalWanted = 90;
     var assignmentsKeyMap = {};
     var gradeSummaryKeyMap = {};
-    var totalsKeyMap = {};
     var grades = {};
     var tableOrder = {};
 
@@ -204,14 +203,12 @@ $(document).ready(function () {
             "</button>\n" + 
             "</div>\n" + 
             generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, grade.period + "-assignments", true) + "\n" +
-            "<div class=\"assignments-header\">\n<h3 class=\"grade-header-1\">Summary</h3>" +
+            "<div class=\"summary-header\">\n<h3 class=\"grade-header-1\">Summary</h3>" +
                 "<div class=\"input-group min-group\">\n" +
                 "<div class=\"input-group-addon\">Target Percent:</div>\n" +
                     "<input class=\"form-control min-val\" value=\"" + percentTotalWanted + "\" id=\"" + grade.period + "-target-val\" data-period=\"" + grade.period + "\">\n" +
                     "<div class=\"input-group-addon percent\">%</div></div>\n</div>\n" + 
-            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, grade.period + "-gradeSummary", false) + 
-            "\n<h3 class=\"header\">Totals</h3>\n" + 
-            generateTable([grade.total], totalsKeyMap, "total", grade.period, grade.period + "-totals", false);
+            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, grade.period + "-gradeSummary", false);
         $("#assignments" + grade.period).on("click", "a", function (e) {
             e.preventDefault();
             var target = $(e.target);
@@ -278,9 +275,9 @@ $(document).ready(function () {
                 "<div class=\"card-header\" data-toggle=\"collapse\" href=\"#grades" + grade.period + "\">\n" +
                     "<div class=\"class-name-header\"><h2 class=\"mb-0\"><a href=\"#\" onclick=\"return false\">" + grade.period + ": " + grade.name + "</a></h1>\n" +
                     "<div id=\"main-percent-" + grade.period + "\" class=\"mb-0 grade-percent\">" + grade.total.percent + "%</h2>" +
-                "</div></div>\n" +
-                "<div id=\"grades" + grade.period + "\" class=\"collapse\" data-parent=\"#main\">\n" +
-                    "<div id=\"grades" + grade.period + "-body\">\n</div>\n</div>\n</div>\n";
+                "</div></div></div>\n" +
+                "<div id=\"grades" + grade.period + "\" class=\"collapse card-body body\" data-parent=\"#main\">\n" +
+                    "<div id=\"grades" + grade.period + "-body\">\n\n</div>\n</div>\n";
         });
         grades.classes.forEach(renderGrade);
     }
@@ -398,7 +395,6 @@ $(document).ready(function () {
         })
         assignmentsKeyMap = grades.assignmentsKeyMap;
         gradeSummaryKeyMap = grades.gradeSummaryKeyMap;
-        totalsKeyMap = grades.totalsKeyMap;
         grades.classes.forEach(function (course) {
             tableOrder[course.period + "-assignments"] = {
                 prop: "date",

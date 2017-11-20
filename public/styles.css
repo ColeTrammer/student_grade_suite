@@ -66,15 +66,16 @@ a:focus {
 }
 
 .grade-header-1 {
-    margin-left: 1%;
+    margin-left: 0;
     margin-bottom: 0;
 }
 
-.assignments-header {
+.assignments-header, .summary-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 1.5% 0;
+    margin: 0 1% 1.5%;
+    text-decoration: underline;
 }
 
 .modal-footer {
@@ -82,14 +83,22 @@ a:focus {
 }
 
 table {
-    margin-left: 1%;
-    margin-right: 1%;
+    margin: 0 1%;
     width: 98%!important;
+}
+
+.summary-header {
+    margin-top: 1%;
 }
 
 .header {
     margin: 1.5% 0;
     margin-left: 1%;
+}
+
+.body {
+    padding: 0 0 1%;
+    margin-top: 1%;
 }
 
 .plus {
@@ -102,7 +111,7 @@ table {
     margin-left: auto;
     margin-top: 0;
     margin-bottom: 0;
-    margin-right: 1%;
+    margin-right: 0;
     border: none;
 }
 
