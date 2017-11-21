@@ -2,14 +2,27 @@
 
 const Grade = require("./models/grades")
 const bodyParser = require("body-parser")
+const updateGrades = require("./update-grades")
 
 module.exports = (app, passport) => {
-    app.get("/api", (req, res) => {
+    app.get("/api/get", forceLogIn, (req, res) => {
         Grade.findById(req.user.grades, (err, grades) => {
             if (err)
                 return res.status(404).send({ error: "No grades" })
             res.send(grades)
         })
+    })
+
+    app.post("/api/update/", bodyParser.urlencoded({ extended: false }), forceLogIn, (req, res) => {
+        if (req.body.semester === "all") {
+            updateGrades.updateAll(req.user, req.body, () => {
+                res.redirect("/grades")
+            })
+        } else {
+            updateGrades.updateSemester(req.user, req.body, () => {
+                res.redirect("/grades")
+            })
+        }
     })
 
     app.get("/", (req, res) => {

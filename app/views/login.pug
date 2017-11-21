@@ -25,7 +25,11 @@ block content
                         label(for="domain") Domain:
                         input.form-control#domain(type="text" name="domain" value="sis.powayusd.com")
                     .form-check
-                        label.form-check-label 
-                            input.form-check-input(type="checkbox" name="refresh" checked) 
-                            |  Update grades
+                        label.form-check-label(for="update")
+                            input.form-check-input#update(type="checkbox" name="update" checked)
+                            |  Update Grades
+                    input.d-none#semester(name="semester" type="text")
                     input.btn.btn-primary(type="submit" value="Log In")
+
+block footer
+    script(src="/public/login.js")

@@ -24,7 +24,7 @@ $(document).ready(function () {
                 if (makePointsInputField && key.key === "points") {
                     out += "<td><input class=\"form-control points\" id=\"" + id + "-input-" + i + "\" data-period=\"" + period + "\" data-i=\"" + i + "\" value=\"" + val + "\"></td>";
                 } else {
-                    out += key.key === "hidden" ? "<td>" + (val.substring(0, 3) + ("data-i=\"" + i + "\" ") + val.substring(3)) + "</td>" : "<td>" + (val + (key.display.includes("%") ? "%" : "")) + "</td>";
+                out += key.key === "hidden" ? "<td>" + (val.substring(0, 3) + ("data-i=\"" + i + "\" ") + val.substring(3)) + "</td>" : "<td>" + (val + (key.display.includes("%") && val !== Infinity ? "%" : "")) + "</td>";
                 }
             });
             out += "</tr>";
@@ -124,7 +124,7 @@ $(document).ready(function () {
             };
             grade.gradeSummary = grade.gradeSummary.map(function (subset) {
                 if (subset.possible === 0) {
-                    subset.percent = grade.total.percent;
+                    subset.percent = grade.total.percent || 100;
                     subset.weightedPercent = roundPercent(subset.weight * subset.percent / 10000);
                     subset.grade = getLetterGrade(subset.percent);
                     subset.implicit = true;
@@ -170,12 +170,19 @@ $(document).ready(function () {
                         return acc + (s.implicit ? s.weight : 0);
                     }, 0));
                     var percentSubsetWanted = (percentTotalWanted - grade.total.percent + adjustedSubsetWeight * subset.points / subset.possible) / adjustedSubsetWeight * 100;
-                    var _percentAssignmentWanted = (percentSubsetWanted - subset.percent + assignment.percent * assignment.possible / subset.possible) / assignment.possible * subset.possible;
-                    assignment.pointsMin = Math.round(_percentAssignmentWanted / 100 * assignment.possible * 1000) / 1000;
+                    if (assignment.possible !== 0) {
+                        var _percentAssignmentWanted = (percentSubsetWanted - subset.percent + assignment.percent * assignment.possible / subset.possible) / assignment.possible * subset.possible;
+                        assignment.pointsMin = Math.round(_percentAssignmentWanted / 100 * assignment.possible * 1000) / 1000;
+                    } else {
+                        assignment.pointsMin = Math.round((percentSubsetWanted * subset.possible / 100 - subset.points) * 1000) / 1000;
+                    }
                 }
                 assignment.pointsMin = Math.max(assignment.pointsMin, 0);
             } else {
                 assignment.pointsMin = 0;
+            }
+            if (assignment.possible === 0 && assignment.points === 0) {
+                assignment.percent = 0;
             }
             return assignment;
         });
@@ -266,7 +273,7 @@ $(document).ready(function () {
             var positive = difference > 0;
             return "<h4 class=\"" + (negative ? "negative" : positive ? "positive" : "") + "\">" + (negative ? "-" : "+") + Math.round(Math.abs(difference) * 1000) / 1000 + "%" + "</h4>";
         }
-        $("#main-percent-" + grade.period).html("<h4>" + grade.total.percent + "%" + "</h4>" + getDifference(grade));
+        $("#main-percent-" + grade.period).html("<h4>" + (grade.total.percent || 100) + "%" + "</h4>" + getDifference(grade));
     }
 
     function render() {
@@ -337,6 +344,7 @@ $(document).ready(function () {
             return false
         }
         modal.find("#assignment-form").on("submit", handleSubmit);
+        var updateSelect = document.getElementById("semester");
     }
 
     function generatePreviousMap(course) {
@@ -376,13 +384,18 @@ $(document).ready(function () {
         data.semesters.sort(function (a, b) {
             return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
         });
-        currentSemester = data.semesters[1];
+        var currentSemesterPath = localStorage.getItem("elocGrades-currentSemesterPath") || data.semesters[0].path;
+        currentSemester = data.semesters.find(function(semester) {
+            return semester.path === currentSemesterPath;
+        });
+        localStorage.setItem("elocGrades-currentSemesterPath", currentSemester.path);
         var semesterSelectLink = document.getElementById("semester-select-link");
         semesterSelectLink.innerHTML = currentSemester.name;
         var semesterSelect = document.getElementById("semester-select");
         data.semesters.forEach(function (semester) {
             semesterSelect.innerHTML += "<a class=\"dropdown-item\" href=\"#\" data-name=\"" + semester.name + "\">" + semester.name + "</a>";
         });
+        var updateSelect = document.getElementById("semester");
         $(semesterSelect).click(function(e) {
             var target = $(e.target);
             var newSemester = data.semesters.find(function(semester) {
@@ -390,8 +403,15 @@ $(document).ready(function () {
             });
             currentSemester = newSemester;
             document.getElementById("semester-select-link").innerHTML = currentSemester.name;
+            localStorage.setItem("elocGrades-currentSemesterPath", currentSemester.path);
+            $(updateSelect).val(currentSemester.path);
             render();
         });
+        data.semesters.forEach(function(semester) {
+            updateSelect.innerHTML += "<option value=\"" + semester.path + "\">" + semester.name + "</option>";
+        });
+        updateSelect.innerHTML += "<option value=\"all\">All</option>"
+        $(updateSelect).val(currentSemester.path);
         data.semesters.forEach(function(semester) {
             semester.classes = semester.classes.sort(function (a, b) {
                 return a.period - b.period;
@@ -442,7 +462,7 @@ $(document).ready(function () {
         render();
     }
 
-    var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
+    var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/get";
 
     $.ajax({
         url: apiUrl,

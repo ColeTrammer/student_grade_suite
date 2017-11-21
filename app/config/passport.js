@@ -2,6 +2,7 @@ const LocalStrategy = require("passport-local").Strategy
 const User = require("../models/user.js")
 const Grade = require("../models/grades.js")
 const getGrades = require("../get-grades")
+const updateGrades = require("../update-grades")
 
 module.exports = (passport) => {
     passport.serializeUser((user, done) => {
@@ -49,8 +50,8 @@ module.exports = (passport) => {
                     return done(null, false)
                 }
 
-                if (req.body.refresh === "on") {
-                    return require("../update-grades")(user, req.body, done)
+                if (req.body.update === "on" && req.body.semester.length > 0) {
+                    return updateGrades.updateSemester(user, req.body, done)
                 }
 
                 return done(null, user)

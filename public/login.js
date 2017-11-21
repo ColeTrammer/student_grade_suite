@@ -1,0 +1,1 @@
+$("#semester").val(localStorage.getItem("elocGrades-currentSemesterPath"))

@@ -63,7 +63,8 @@ function getListOfSemesters(html, domain, cookies, done) {
                 semesters.push({
                     name: elem.innerHTML,
                     classes: [],
-                    html: html
+                    html: html,
+                    path: "/"
                 })
                 cb()
             } else {
@@ -75,7 +76,8 @@ function getListOfSemesters(html, domain, cookies, done) {
                     semesters.push({
                         name: elem.firstElementChild.innerHTML,
                         classes: [],
-                        html: rawData
+                        html: rawData,
+                        path: "/" + elem.firstElementChild.attributes.href.value
                     })
                     cb()
                 })
@@ -84,8 +86,24 @@ function getListOfSemesters(html, domain, cookies, done) {
             cb()
         }
     }, () => {
-        done(semesters)
+        done(fixSemesters(semesters))
     })
+}
+
+function fixSemesters(semesters) {
+    if (semesters.length <= 1) {
+        return semesters
+    }
+    const indexToFix = semesters.findIndex((semester) => semester.path === "/")
+    const { document } = new JSDOM(semesters[indexToFix === 0 ? 1 : 0].html).window
+    document.querySelectorAll(".heading_breadcrumb li").forEach((elem, i) => {
+        if (i % 2 == 0 && elem.firstElementChild) {
+            if (elem.firstElementChild.innerHTML === semesters[indexToFix].name) {
+                semesters[indexToFix].path = "/" + elem.firstElementChild.attributes.href.value
+            }
+        }
+    })
+    return semesters;
 }
 
 function getListOfClasses(html) {
@@ -179,7 +197,7 @@ function getGradeSummary(html) {
     return summ
 }
 
-module.exports = (username, password, domain, done) => {
+module.exports.getAll = (username, password, domain, done) => {
     get({
         hostname: domain,
         path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
@@ -309,7 +327,8 @@ module.exports = (username, password, domain, done) => {
                         }, () => {
                             grades.semesters.push({
                                 name: semester.name,
-                                classes: semester.classes
+                                classes: semester.classes,
+                                path: semester.path
                             })
                             cb1()
                         })
@@ -319,6 +338,57 @@ module.exports = (username, password, domain, done) => {
                         }
                         done(null, grades)
                     })
+                })
+            })
+        })
+    })
+}
+
+module.exports.getSemester = (username, password, domain, path, done) => {
+    get({
+        hostname: domain,
+        path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
+    }, (rawData, res) => {
+        const cookies = res.headers["set-cookie"][0].substring(0, 42)
+        post({
+            hostname: domain,
+            path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
+            cookies: cookies
+        }, {
+            __VIEWSTATE: getValue(/"__VIEWSTATE" value="(.*)"/g, rawData),
+            __VIEWSTATEGENERATOR: getValue(/"__VIEWSTATEGENERATOR" value="(.*)"/g, rawData),
+            __EVENTVALIDATION: getValue(/"__EVENTVALIDATION" value="(.*)"/g, rawData),
+            username: username,
+            password: password
+        }, (rawData, res) => {
+            get({
+                hostname: domain,
+                path: path,
+                cookies: cookies
+            }, (rawData, res) => {
+                const classes = getListOfClasses(rawData)
+                let semester = {
+                    path: path,
+                    classes: []
+                }
+                async.each(classes, (class_, cb) => {
+                    get({
+                        hostname: domain,
+                        path: class_.path,
+                        cookies: cookies
+                    }, (rawData) => {
+                        semester.classes.push({
+                            name: class_.name,
+                            period: class_.period,
+                            assignments: getAssignments(rawData),
+                            gradeSummary: getGradeSummary(rawData)
+                        })
+                        cb()
+                    })
+                }, (err) => {
+                    if (err)
+                        return done(err)
+                    done(null, semester)
                 })
             })
         })

@@ -60,6 +60,10 @@ a:focus {
     text-decoration: none;
 }
 
+.nav-link {
+    color: rgba(255, 255, 255, 0.7)!important;
+}
+
 .plus-text {
     vertical-align: text-top;
     line-height: 1;
@@ -119,5 +123,5 @@ table {
 }
 
 .class {
-    margin: 2%;
+    margin: 30px 2%;
 }
