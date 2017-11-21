@@ -8,18 +8,10 @@ module.exports = (user, body, done) => {
         if (err) {
             return done(null, false)
         }
-        Grade.findById(user.grades, (err, gradesInDb) => {
+        Grade.findByIdAndUpdate(user.grades, grades, () => {
             if (err)
                 return done(err)
-            if (grades.classes.every((course) => course !== null)) {
-                gradesInDb.classes = grades.classes
-                gradesInDb.markModified("classes")
-                gradesInDb.save(() => {
-                    done(null, user)
-                })
-            } else {
-                done(null, user)
-            }
+            done(null, user)
         })
     })
 }

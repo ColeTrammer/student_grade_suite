@@ -5,7 +5,7 @@ $(document).ready(function () {
     var percentTotalWanted = 90;
     var assignmentsKeyMap = {};
     var gradeSummaryKeyMap = {};
-    var grades = {};
+    var currentSemester = {};
     var tableOrder = {};
 
     function generateTable(data, keyOrder, name, period, sortKey, makePointsInputField) {
@@ -182,8 +182,9 @@ $(document).ready(function () {
         return grade;
     }
 
-    function processGrades() {
-        return grades.classes.map(processGrade);
+    function processGrades(semester) {
+        semester.classes = semester.classes.map(processGrade);
+        return semester;
     }
 
     function renderGrade(grade) {
@@ -194,25 +195,25 @@ $(document).ready(function () {
             });
             if (order.order !== "down") data.reverse();
         }
-        sort(grade.assignments, grade.period + "-assignments");
-        sort(grade.gradeSummary, grade.period + "-gradeSummary");
+        sort(grade.assignments, currentSemester.name + grade.period + "-assignments");
+        sort(grade.gradeSummary, currentSemester.name + grade.period + "-gradeSummary");
         document.getElementById("grades" + grade.period + "-body").innerHTML = "<div class=\"assignments-header\">\n" + 
             "<h3 class=\"grade-header-1\">Assignments</h3>" +
             "<button class=\"btn plus\" data-toggle=\"modal\" id=\"plus-" + grade.period + "\" data-target=\"#add-assignment\" data-period=\"" + grade.period + "\">" +
                 "<span class=\"plus-text\" data-period=\"" + grade.period + "\">+</span>" + 
             "</button>\n" + 
             "</div>\n" + 
-            generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, grade.period + "-assignments", true) + "\n" +
+            generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, currentSemester.name + grade.period + "-assignments", true) + "\n" +
             "<div class=\"summary-header\">\n<h3 class=\"grade-header-1\">Summary</h3>" +
                 "<div class=\"input-group min-group\">\n" +
                 "<div class=\"input-group-addon\">Target Percent:</div>\n" +
                     "<input class=\"form-control min-val\" value=\"" + percentTotalWanted + "\" id=\"" + grade.period + "-target-val\" data-period=\"" + grade.period + "\">\n" +
                     "<div class=\"input-group-addon percent\">%</div></div>\n</div>\n" + 
-            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, grade.period + "-gradeSummary", false);
+            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, currentSemester.name + grade.period + "-gradeSummary", false);
         $("#assignments" + grade.period).on("click", "a", function (e) {
             e.preventDefault();
             var target = $(e.target);
-            var course = grades.classes.find(function (c) {
+            var course = currentSemester.classes.find(function (c) {
                 return c.name === target.data("class");
             });
             var assignment = course.assignments[target.data("i")];
@@ -223,7 +224,7 @@ $(document).ready(function () {
         $("#assignments" + grade.period).on("change", "input", function (e) {
             e.preventDefault();
             var target = $(e.target);
-            var course = grades.classes.find(function (c) {
+            var course = currentSemester.classes.find(function (c) {
                 return +c.period === target.data("period");
             });
             var assignment = course.assignments[target.data("i")];
@@ -237,11 +238,11 @@ $(document).ready(function () {
         });
         function sortHandler(e) {
             var target = $(e.target);
-            var course = grades.classes.find(function (c) {
+            var course = currentSemester.classes.find(function (c) {
                 return +c.period === target.data("period");
             });
             var data = course[target.data("name")];
-            var order = tableOrder[course.period + "-" + target.data("name")];
+            var order = tableOrder[currentSemester.name + course.period + "-" + target.data("name")];
             var down = order.prop !== target.data("key") || order.order === "up";
             order.prop = target.data("key");
             order.order = down ? "down" : "up";
@@ -251,7 +252,7 @@ $(document).ready(function () {
         $("#gradeSummary" + grade.period + "-header").on("click", "th", sortHandler);
         $("#" + grade.period + "-target-val").on("change", function (e) {
             var target = $(e.target);
-            var course = grades.classes.find(function (c) {
+            var course = currentSemester.classes.find(function (c) {
                 return +c.period === target.data("period");
             });
             var newVal = parseFloat(target.val());
@@ -270,7 +271,8 @@ $(document).ready(function () {
 
     function render() {
         var main = document.getElementById("main");
-        grades.classes.forEach(function (grade, i) {
+        main.innerHTML = "";//"<h1 class=\"mb-0 text-center\">Grades</h1>";
+        currentSemester.classes.forEach(function (grade, i) {
             main.innerHTML += "<div class=\"card class text-left\">\n" +
                 "<div class=\"card-header\" data-toggle=\"collapse\" href=\"#grades" + grade.period + "\">\n" +
                     "<div class=\"class-name-header\"><h2 class=\"mb-0\"><a href=\"#\" onclick=\"return false\">" + grade.period + ": " + grade.name + "</a></h1>\n" +
@@ -279,18 +281,19 @@ $(document).ready(function () {
                 "<div id=\"grades" + grade.period + "\" class=\"collapse card-body body\" data-parent=\"#main\">\n" +
                     "<div id=\"grades" + grade.period + "-body\">\n\n</div>\n</div>\n";
         });
-        grades.classes.forEach(renderGrade);
+        currentSemester.classes.forEach(renderGrade);
+        modalInit()
     }
 
     function modalInit() {
         var modal = $("#add-assignment");
         var classSelect = modal.find("#classSelect");
-        classSelect.html(grades.classes.reduce(function (acc, c) {
+        classSelect.html(currentSemester.classes.reduce(function (acc, c) {
             return acc + ("<option value=\"" + c.name + "\">" + c.period + ": " + c.name + "</option>");
         }, ""));
         modal.on("show.bs.modal", function (e) {
             var period = $(e.relatedTarget).data("period");
-            var course = grades.classes.find(function (course) {
+            var course = currentSemester.classes.find(function (course) {
                 return +course.period === period;
             });
             classSelect.val(course.name);
@@ -307,7 +310,7 @@ $(document).ready(function () {
             values.points = +values.points;
             values.possible = +values.possible;
             if (values.possible && (values.points || values.points === 0) && values.name) {
-                var course = grades.classes.find(function (course) {
+                var course = currentSemester.classes.find(function (course) {
                     return course.name === values.class;
                 });
                 function zero(num) {
@@ -370,50 +373,73 @@ $(document).ready(function () {
     }
 
     function initDisplay(data) {
-        data.classes = data.classes.sort(function (a, b) {
-            return a.period - b.period;
-        }).map(function (course) {
-            course.assignments.map(function (assignment) {
-                assignment.hidden = assignment.implicit ? ">True<" : ">False<";
-            });
-            course.previous = generatePreviousMap(course);
-            return course;
+        data.semesters.sort(function (a, b) {
+            return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
         });
-        grades = data;
-        processGrades();
-        grades.assignmentsKeyMap.splice(2, 0, {
+        currentSemester = data.semesters[1];
+        var semesterSelectLink = document.getElementById("semester-select-link");
+        semesterSelectLink.innerHTML = currentSemester.name;
+        var semesterSelect = document.getElementById("semester-select");
+        data.semesters.forEach(function (semester) {
+            semesterSelect.innerHTML += "<a class=\"dropdown-item\" href=\"#\" data-name=\"" + semester.name + "\">" + semester.name + "</a>";
+        });
+        $(semesterSelect).click(function(e) {
+            var target = $(e.target);
+            var newSemester = data.semesters.find(function(semester) {
+                return semester.name === target.data("name");
+            });
+            currentSemester = newSemester;
+            document.getElementById("semester-select-link").innerHTML = currentSemester.name;
+            render();
+        });
+        data.semesters.forEach(function(semester) {
+            semester.classes = semester.classes.sort(function (a, b) {
+                return a.period - b.period;
+            }).map(function (course) {
+                course.assignments = course.assignments.map(function (assignment) {
+                    assignment.hidden = assignment.implicit ? ">True<" : ">False<";
+                    return assignment;
+                });
+                course.previous = generatePreviousMap(course);
+                return course;
+            });
+        });
+        data.semesters = data.semesters.map(function(semester) {
+            semester = processGrades(semester);
+            semester.classes.forEach(function (course) {
+                tableOrder[semester.name + course.period + "-assignments"] = {
+                    prop: "date",
+                    order: "up"
+                };
+                tableOrder[semester.name + course.period + "-gradeSummary"] = {
+                    prop: "name",
+                    order: "down"
+                };
+                tableOrder[semester.name + course.period + "-totals"] = {
+                    prop: "none",
+                    order: "none"
+                };
+                course.gradeSummary.sort(function (a, b) {
+                    return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
+                });
+            }); 
+            return semester;
+        })
+        data.assignmentsKeyMap.splice(2, 0, {
             key: "pointsMin",
             display: "Minimum Points"
         });
-        grades.assignmentsKeyMap.push({
+        data.assignmentsKeyMap.push({
             key: "hidden",
             display: "Hidden"
         });
-        grades.assignmentsKeyMap.splice(1, 0, {
+        data.assignmentsKeyMap.splice(1, 0, {
             key: "date",
             display: "Date"
         })
-        assignmentsKeyMap = grades.assignmentsKeyMap;
-        gradeSummaryKeyMap = grades.gradeSummaryKeyMap;
-        grades.classes.forEach(function (course) {
-            tableOrder[course.period + "-assignments"] = {
-                prop: "date",
-                order: "up"
-            };
-            tableOrder[course.period + "-gradeSummary"] = {
-                prop: "name",
-                order: "down"
-            };
-            tableOrder[course.period + "-totals"] = {
-                prop: "none",
-                order: "none"
-            };
-            course.gradeSummary.sort(function (a, b) {
-                return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
-            });
-        });        
+        assignmentsKeyMap = data.assignmentsKeyMap;
+        gradeSummaryKeyMap = data.gradeSummaryKeyMap;       
         render();
-        modalInit();
     }
 
     var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";

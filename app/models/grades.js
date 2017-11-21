@@ -6,7 +6,8 @@ const schema = new mongoose.Schema({
     "totalsKeyMap": Object,
     "gradeSummaryKeyMap": Object,
     "assignmentsKeyMap": Object,
-    "classes": Object
+    "semesters": Object,
+    "username": String
 })
 
 module.exports = mongoose.model("Grade", schema)

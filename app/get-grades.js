@@ -53,6 +53,41 @@ function post(options, postData, cb) {
     req.end()
 }
 
+function getListOfSemesters(html, domain, cookies, done) {
+    const { document } = new JSDOM(html).window
+
+    let semesters = []
+    async.forEachOf(document.querySelectorAll(".heading_breadcrumb li"), (elem, i, cb) => {
+        if (i % 2 == 0) {
+            if (elem.classList.contains("selected")) {
+                semesters.push({
+                    name: elem.innerHTML,
+                    classes: [],
+                    html: html
+                })
+                cb()
+            } else {
+                get({
+                    hostname: domain,
+                    path: "/" + elem.firstElementChild.attributes.href.value,
+                    cookies: cookies
+                }, (rawData) => {
+                    semesters.push({
+                        name: elem.firstElementChild.innerHTML,
+                        classes: [],
+                        html: rawData
+                    })
+                    cb()
+                })
+            }
+        } else {
+            cb()
+        }
+    }, () => {
+        done(semesters)
+    })
+}
+
 function getListOfClasses(html) {
     const { document } = new JSDOM(html).window
 
@@ -133,33 +168,6 @@ function getGradeSummary(html) {
                         break
                 case 1: subset.weight = +val.innerHTML.replace("%", "")
                         break
-                case 2: subset.points = 0
-                        break
-                case 3: subset.possible = 0
-                        break
-            }
-        })
-        summ.push(subset)
-    }
-    return summ
-}
-
-function getGradeSummary(html) {
-    const { document } = new JSDOM(html).window
-
-    if (!hasGradeSummary(document))
-        return "none"
-
-    let summ = []
-    const data = document.querySelector(".info_tbl").querySelectorAll("tr")
-    for (let i = 1; i < data.length - 1; i++) {
-        let subset = {}
-        data.item(i).querySelectorAll("td").forEach((val, i) => {
-            switch(i) {
-                case 0: subset.name = val.innerHTML
-                        break
-                case 1: subset.weight = +val.innerHTML.replace("%", "")
-                        break
                 case 2: subset.points = +val.innerHTML
                         break
                 case 3: subset.possible = +val.innerHTML
@@ -169,84 +177,6 @@ function getGradeSummary(html) {
         summ.push(subset)
     }
     return summ
-}
-
-function processGrade(grade) {
-    function getLetterGrade(percent) {
-        return "ABCDFFFFFF".charAt(4 - Math.floor((percent - 50) / 10)) || "A";
-    }
-
-    function roundPercent(dec) {
-        return Math.round(dec * 100000) / 1000;
-    }
-
-    if (grade.gradeSummary === "none" || grade.gradeSummary.every(function (s) {
-        return s.implicit;
-    })) {
-        var categoryMap = {};
-        var totals = [0, 0];
-        grade.assignments.forEach(function (assignment) {
-            if (!assignment.hidden || assignment.hidden.includes(">False<")) {
-                if (categoryMap[assignment.type]) {
-                    categoryMap[assignment.type].points += assignment.points;
-                    categoryMap[assignment.type].possible += assignment.possible;
-                } else {
-                    categoryMap[assignment.type] = {
-                        points: assignment.points,
-                        possible: assignment.possible
-                    };
-                }
-                totals[0] += assignment.points;
-                totals[1] += assignment.possible;
-            }
-        });
-        grade.total = {
-            points: totals[0],
-            possible: totals[1],
-            percent: roundPercent(totals[0] / totals[1]),
-            grade: getLetterGrade(totals[0] / totals[1] * 100)
-        };
-    } else {
-        grade.gradeSummary = grade.gradeSummary.map(function (subset) {
-            subset.points = 0;
-            subset.possible = 0;
-            return subset;
-        });
-        grade.assignments.forEach(function (assignment) {
-                var subset = grade.gradeSummary.find(function (s) {
-                    return s.name === assignment.type;
-                });
-                subset.points += assignment.points;
-                subset.possible += assignment.possible;
-        });
-        var totals = [0, 0, 0, 0];
-        grade.gradeSummary = grade.gradeSummary.map(function (subset) {
-            if (subset.possible !== 0) {
-                subset.percent = roundPercent(subset.points / subset.possible);
-                subset.weightedPercent = roundPercent(subset.weight * subset.percent / 10000);
-                subset.grade = getLetterGrade(subset.percent);
-                subset.implicit = false;
-                totals[0] += subset.points;
-                totals[1] += subset.possible;
-                totals[2] += subset.weightedPercent;
-                totals[3] += subset.weight;
-            }
-
-            return subset;
-        });
-        grade.total = {
-            points: totals[0],
-            possible: totals[1],
-            percent: roundPercent(totals[2] / totals[3]),
-            grade: getLetterGrade(totals[2] / totals[3] * 100)
-        };
-    }
-    return grade;
-}
-
-function processGrades(grades) {
-    grades.classes = grades.classes.map(processGrade);
-    return grades
 }
 
 module.exports = (username, password, domain, done) => {
@@ -271,114 +201,124 @@ module.exports = (username, password, domain, done) => {
                 path: "/PXP_Gradebook.aspx?AGU=0",
                 cookies: cookies
             }, (rawData, res) => {
-                const classes = getListOfClasses(rawData)
-
-                let grades = {
-                    classes: [],
-                    username: username,
-                    cookies: cookies,
-                    assignmentsKeyMap: [
-                        {
-                            key: "name",
-                            display: "Name"
-                        },
-                        {
-                            key: "type",
-                            display: "Type"
-                        },                    
-                        {
-                            key: "points",
-                            display: "Points"
-                        },
-                        {
-                            key: "possible",
-                            display: "Points Possible"
-                        },
-                        {
-                            key: "percent",
-                            display: "%"
-                        },
-                        {
-                            key: "weightedPercent",
-                            display: "% Earned"
-                        },
-                        {
-                            key: "weight",
-                            display: "% Worth"
-                        },
-                        {
-                            key: "grade",
-                            display: "Grade"
-                        }
-                    ],
-                    gradeSummaryKeyMap: [
-                        {
-                            key: "name",
-                            display: "Name"
-                        },
-                        {
-                            key: "points",
-                            display: "Points"
-                        },
-                        {
-                            key: "possible",
-                            display: "Points Possible"
-                        },
-                        {
-                            key: "percent",
-                            display: "%"
-                        },
-                        {
-                            key: "weightedPercent",
-                            display: "% Earned"
-                        },
-                        {
-                            key: "weight",
-                            display: "% Worth"
-                        },
-                        {
-                            key: "grade",
-                            display: "Grade"
-                        }
-                    ],
-                    totalsKeyMap: [
-                        {
-                            key: "points",
-                            display: "Points"
-                        },
-                        {
-                            key: "possible",
-                            display: "Points Possible"
-                        },
-                        {
-                            key: "percent",
-                            display: "%"
-                        },
-                        {
-                            key: "grade",
-                            display: "Grade"
-                        }
-                    ]
-                }
-                async.each(classes, (class_, cb) => {
-                    get({
-                        hostname: domain,
-                        path: class_.path,
-                        cookies: cookies
-                    }, (rawData) => {
-                        grades.classes.push({
-                            name: class_.name,
-                            period: class_.period,
-                            assignments: getAssignments(rawData),
-                            gradeSummary: getGradeSummary(rawData)
-                        })
-                        cb()
-                    })
-                }, () => {
-                    if (!grades.classes.length) {
-                        return done({ error: "No classes" })
+                getListOfSemesters(rawData, domain, cookies, (semesters) => {
+                    let grades = {
+                        semesters: [],
+                        username: username,
+                        cookies: cookies,
+                        assignmentsKeyMap: [
+                            {
+                                key: "name",
+                                display: "Name"
+                            },
+                            {
+                                key: "type",
+                                display: "Type"
+                            },                    
+                            {
+                                key: "points",
+                                display: "Points"
+                            },
+                            {
+                                key: "possible",
+                                display: "Points Possible"
+                            },
+                            {
+                                key: "percent",
+                                display: "%"
+                            },
+                            {
+                                key: "weightedPercent",
+                                display: "% Earned"
+                            },
+                            {
+                                key: "weight",
+                                display: "% Worth"
+                            },
+                            {
+                                key: "grade",
+                                display: "Grade"
+                            }
+                        ],
+                        gradeSummaryKeyMap: [
+                            {
+                                key: "name",
+                                display: "Name"
+                            },
+                            {
+                                key: "points",
+                                display: "Points"
+                            },
+                            {
+                                key: "possible",
+                                display: "Points Possible"
+                            },
+                            {
+                                key: "percent",
+                                display: "%"
+                            },
+                            {
+                                key: "weightedPercent",
+                                display: "% Earned"
+                            },
+                            {
+                                key: "weight",
+                                display: "% Worth"
+                            },
+                            {
+                                key: "grade",
+                                display: "Grade"
+                            }
+                        ],
+                        totalsKeyMap: [
+                            {
+                                key: "points",
+                                display: "Points"
+                            },
+                            {
+                                key: "possible",
+                                display: "Points Possible"
+                            },
+                            {
+                                key: "percent",
+                                display: "%"
+                            },
+                            {
+                                key: "grade",
+                                display: "Grade"
+                            }
+                        ]
                     }
-                    done(null, processGrades(grades))
+                    async.each(semesters, (semester, cb1) => {
+                        const classes = getListOfClasses(semester.html)
+    
+                        async.each(classes, (class_, cb2) => {
+                            get({
+                                hostname: domain,
+                                path: class_.path,
+                                cookies: cookies
+                            }, (rawData) => {
+                                semester.classes.push({
+                                    name: class_.name,
+                                    period: class_.period,
+                                    assignments: getAssignments(rawData),
+                                    gradeSummary: getGradeSummary(rawData)
+                                })
+                                cb2()
+                            })
+                        }, () => {
+                            grades.semesters.push({
+                                name: semester.name,
+                                classes: semester.classes
+                            })
+                            cb1()
+                        })
+                    }, () => {
+                        if (!grades.semesters.length) {
+                            return done({ error: "No semesters" })
+                        }
+                        done(null, grades)
+                    })
                 })
             })
         })

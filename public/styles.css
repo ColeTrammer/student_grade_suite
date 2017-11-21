@@ -75,6 +75,9 @@ a:focus {
     justify-content: space-between;
     align-items: center;
     margin: 0 1% 1.5%;
+}
+
+.assignments-header, .summary-header h3 {
     text-decoration: underline;
 }
 

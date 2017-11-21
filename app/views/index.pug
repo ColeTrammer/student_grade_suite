@@ -31,7 +31,16 @@ block content
                 .modal-footer
                     input#add.btn.btn-primary(type="submit", form="assignment-form", value="Add")
                     button.btn.btn-secondary(type="button", data-dismiss="modal") Cancel
-    h1.mb-0.text-center Grades
-    
+    nav.navbar.navbar-expand-lg.navbar-dark.bg-dark
+        a.navbar-brand(href="#") Eloc Grades
+        button.navbar-toggler(type="button" data-toggle="collapse" data-target="#dropdown")
+            span.navbar-toggler-icon
+        .collapse.navbar-collapse#dropdown
+            ul.navbar-nav.ml-auto
+                li.nav-item.dropdown
+                    a.nav-link.dropdown-toggle#semester-select-link.active(href="#" data-toggle="dropdown")
+                    .dropdown-menu#semester-select
+    #main
+
 block footer
     script(src="/public/client.js")
