@@ -14,6 +14,8 @@ module.exports = (app, passport) => {
     })
 
     app.post("/api/update/", bodyParser.urlencoded({ extended: false }), forceLogIn, (req, res) => {
+        req.body.username = req.user.username
+        req.body.domain = req.user.domain
         if (req.body.semester === "all") {
             updateGrades.updateAll(req.user, req.body, () => {
                 res.redirect("/grades")

@@ -460,6 +460,7 @@ $(document).ready(function () {
         assignmentsKeyMap = data.assignmentsKeyMap;
         gradeSummaryKeyMap = data.gradeSummaryKeyMap;       
         render();
+        console.log(data)
     }
 
     var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/get";

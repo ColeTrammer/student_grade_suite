@@ -32,10 +32,6 @@ module.exports = (passport) => {
                             req.flash("loginMessage", "Invalid username/password combination")
                             return done(null, false)
                         }
-                        grades.classes = grades.classes.map((course) => {
-                            course.previous = []
-                            return course
-                        })
                         Grade.create(grades, (err, grades) => {
                             if (err)
                                 return done(err)

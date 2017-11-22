@@ -17,14 +17,8 @@ block content
                             label(for="semester") Semester:
                             select#semester.form-control(name="semester")
                         .form-group
-                            label(for="username") Username:
-                            input.form-control#username(type="text" name="username")
-                        .form-group
                             label(for="password") Password:
                             input.form-control#password(type="password" name="password")
-                        .form-group
-                            label(for="domain") Domain:
-                            input.form-control#domain(type="text" name="domain" value="sis.powayusd.com")
                 .modal-footer
                     input#update.btn.btn-primary(type="submit", form="update-form", value="Update")
                     button.btn.btn-secondary(type="button", data-dismiss="modal") Cancel
@@ -61,7 +55,7 @@ block content
             span.navbar-toggler-icon
         .collapse.navbar-collapse#dropdown
             ul.navbar-nav.mr-auto
-                li.nav-item.dropdown
+                li.nav-item
                     a.nav-link#update-link(href="#" data-toggle="modal" data-target="#update-modal") Update Grades
             ul.navbar-nav.ml-auto
                 li.nav-item.dropdown

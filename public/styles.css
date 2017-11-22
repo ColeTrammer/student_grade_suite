@@ -35,6 +35,18 @@ table {
     margin-bottom: 0;
 }
 
+.dropdown-menu {
+    background-color: #343a40!important;
+  }
+
+.dropdown-menu a {
+    color: rgba(255, 255, 255, 0.7)!important;
+}
+
+.dropdown-menu a:hover {
+    background-color: #343a40!important;
+}
+
 .points {
     width: 120px;
     margin: 0 auto;
