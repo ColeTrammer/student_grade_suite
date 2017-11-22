@@ -27,7 +27,7 @@ module.exports = (passport) => {
                     newUser.username = username
                     newUser.password = newUser.generateHash(password)
                     newUser.domain = req.body.domain
-                    return getGrades(username, password, req.body.domain, (err, grades) => {
+                    return getGrades.getAll(username, password, req.body.domain, (err, grades) => {
                         if (err) {
                             req.flash("loginMessage", "Invalid username/password combination")
                             return done(null, false)
