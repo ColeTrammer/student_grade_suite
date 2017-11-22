@@ -169,7 +169,7 @@ $(document).ready(function () {
                     }, 0) * grade.gradeSummary.reduce(function (acc, s) {
                         return acc + (s.implicit ? s.weight : 0);
                     }, 0));
-                    var percentSubsetWanted = (percentTotalWanted - grade.total.percent + adjustedSubsetWeight * subset.points / subset.possible) / adjustedSubsetWeight * 100;
+                    var percentSubsetWanted = (percentTotalWanted  - grade.total.percent + adjustedSubsetWeight * subset.points / subset.possible) / adjustedSubsetWeight * 100;
                     if (assignment.possible !== 0) {
                         var _percentAssignmentWanted = (percentSubsetWanted - subset.percent + assignment.percent * assignment.possible / subset.possible) / assignment.possible * subset.possible;
                         assignment.pointsMin = Math.round(_percentAssignmentWanted / 100 * assignment.possible * 1000) / 1000;

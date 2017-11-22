@@ -81,7 +81,7 @@ a:focus {
     margin: 0 1% 1.5%;
 }
 
-.assignments-header, .summary-header h3 {
+.assignments-header h3, .summary-header h3 {
     text-decoration: underline;
 }
 
@@ -104,8 +104,12 @@ table {
 }
 
 .body {
-    padding: 0 0 1%;
-    margin-top: 1%;
+    padding: 1% 0 1%;
+}
+
+tbody {
+    background-color: white;
+    color: black;
 }
 
 .plus {
