@@ -7,6 +7,7 @@ $(document).ready(function () {
     var gradeSummaryKeyMap = {};
     var currentSemester = {};
     var tableOrder = {};
+    var spaceRegExp = new RegExp(" ", "g");
 
     function generateTable(data, keyOrder, name, period, sortKey, makePointsInputField) {
         var id = name + period;
@@ -202,21 +203,23 @@ $(document).ready(function () {
             });
             if (order.order !== "down") data.reverse();
         }
-        sort(grade.assignments, currentSemester.name + grade.period + "-assignments");
-        sort(grade.gradeSummary, currentSemester.name + grade.period + "-gradeSummary");
-        document.getElementById("grades" + grade.period + "-body").innerHTML = "<div class=\"assignments-header\">\n" + 
+        sort(grade.assignments, currentSemester.name.replace(spaceRegExp, "") + grade.period + "-assignments");
+        sort(grade.gradeSummary, currentSemester.name.replace(spaceRegExp, "") + grade.period + "-gradeSummary");
+        document.getElementById("grades" + grade.period + "-body").innerHTML = "<div class=\"graph-header\"><h3 class=\"grade-header-1\">Graph</h3></div>" +
+            "<svg class=\"graph\" id=\"" + currentSemester.name.replace(spaceRegExp, "") + grade.period + "-graph\"></svg>" +
+            "<div class=\"assignments-header\">\n" + 
             "<h3 class=\"grade-header-1\">Assignments</h3>" +
             "<button class=\"btn plus\" data-toggle=\"modal\" id=\"plus-" + grade.period + "\" data-target=\"#add-assignment\" data-period=\"" + grade.period + "\">" +
                 "<span class=\"plus-text\" data-period=\"" + grade.period + "\">+</span>" + 
             "</button>\n" + 
             "</div>\n" + 
-            generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, currentSemester.name + grade.period + "-assignments", true) + "\n" +
+            generateTable(grade.assignments, assignmentsKeyMap, "assignments", grade.period, currentSemester.name.replace(spaceRegExp, "") + grade.period + "-assignments", true) + "\n" +
             "<div class=\"summary-header\">\n<h3 class=\"grade-header-1\">Summary</h3>" +
                 "<div class=\"input-group min-group\">\n" +
                 "<div class=\"input-group-addon\">Target Percent:</div>\n" +
                     "<input class=\"form-control min-val\" value=\"" + percentTotalWanted + "\" id=\"" + grade.period + "-target-val\" data-period=\"" + grade.period + "\">\n" +
                     "<div class=\"input-group-addon percent\">%</div></div>\n</div>\n" + 
-            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, currentSemester.name + grade.period + "-gradeSummary", false);
+            generateTable(grade.gradeSummary, gradeSummaryKeyMap, "gradeSummary", grade.period, currentSemester.name.replace(spaceRegExp, "") + grade.period + "-gradeSummary", false);
         $("#assignments" + grade.period).on("click", "a", function (e) {
             e.preventDefault();
             var target = $(e.target);
@@ -249,7 +252,7 @@ $(document).ready(function () {
                 return +c.period === target.data("period");
             });
             var data = course[target.data("name")];
-            var order = tableOrder[currentSemester.name + course.period + "-" + target.data("name")];
+            var order = tableOrder[currentSemester.name.replace(spaceRegExp, "") + course.period + "-" + target.data("name")];
             var down = order.prop !== target.data("key") || order.order === "up";
             order.prop = target.data("key");
             order.order = down ? "down" : "up";
@@ -268,19 +271,70 @@ $(document).ready(function () {
             renderGrade(course);
         });
         function getDifference(grade) {
-            var difference = grade.total.percent - (grade.previous && grade.previous[0] && grade.previous[0].percent) || 0;
+            var difference = grade.total.percent - (grade.previous && grade.previous[1] && grade.previous[1].percent) || 0;
             var negative = difference < 0;
             var positive = difference > 0;
             return "<h4 class=\"" + (negative ? "negative" : positive ? "positive" : "") + "\">" + (negative ? "-" : "+") + Math.round(Math.abs(difference) * 1000) / 1000 + "%" + "</h4>";
         }
         $("#main-percent-" + grade.period).html("<h4>" + (grade.total.percent || 100) + "%" + "</h4>" + getDifference(grade));
+        graphCourse(grade);
+    }
+
+    function graphCourse(course) {
+        var margin = {
+            top: 0,
+            bottom: 20,
+            left: 25,
+            right: 0
+        };
+        var divWidth = document.getElementById("card" + course.period).getBoundingClientRect().width;
+        var desiredWidth = (divWidth - 2) * 0.97;// subtracts 2% of the divWidth
+                                                 // when not inspecting,
+                                                 // when inspecting subracts 3% of the divWidth
+                                                 // b/c js
+        var width = desiredWidth - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+          
+        var svg = d3.select("#" + currentSemester.name.replace(spaceRegExp, "") + course.period + "-graph")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+        var g = svg.append("g")
+            .attr("transform", "translate(" + [margin.left, margin.top] + ")");
+
+        var x = d3.scaleTime()
+            .range([0, width]);
+    
+        var y = d3.scaleLinear()
+            .range([height, 0]);
+
+        var line = d3.line()
+            .x(function(d) { return x(d.date); })
+            .y(function(d) { return y(d.percent); });
+        
+        x.domain(d3.extent(course.previous, function(d) { return d.date; }));
+        y.domain(d3.extent(course.previous, function(d) { return d.percent; }));
+
+        g.append("path")
+            .data([course.previous])
+            .attr("class", "line")
+            .attr("d", line);
+
+        g.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+      
+        g.append("g")
+            .call(d3.axisLeft(y));
+
+        console.log(course.previous)
     }
 
     function render() {
         var main = document.getElementById("main");
-        main.innerHTML = "";//"<h1 class=\"mb-0 text-center\">Grades</h1>";
+        main.innerHTML = "";
         currentSemester.classes.forEach(function (grade, i) {
-            main.innerHTML += "<div class=\"card class text-left\">\n" +
+            main.innerHTML += "<div class=\"card class text-left\" id=\"card" + grade.period + "\">\n" +
                 "<div class=\"card-header\" data-toggle=\"collapse\" href=\"#grades" + grade.period + "\">\n" +
                     "<div class=\"class-name-header\"><h2 class=\"mb-0\"><a href=\"#\" onclick=\"return false\">" + grade.period + ": " + grade.name + "</a></h1>\n" +
                     "<div id=\"main-percent-" + grade.period + "\" class=\"mb-0 grade-percent\">" + grade.total.percent + "%</h2>" +
@@ -377,7 +431,7 @@ $(document).ready(function () {
                 course.gradeSummary = "none";
             }
         });
-        return previous.slice(1);
+        return previous;
     }
 
     function initDisplay(data) {
@@ -427,15 +481,15 @@ $(document).ready(function () {
         data.semesters = data.semesters.map(function(semester) {
             semester = processGrades(semester);
             semester.classes.forEach(function (course) {
-                tableOrder[semester.name + course.period + "-assignments"] = {
+                tableOrder[semester.name.replace(spaceRegExp, "") + course.period + "-assignments"] = {
                     prop: "date",
                     order: "up"
                 };
-                tableOrder[semester.name + course.period + "-gradeSummary"] = {
+                tableOrder[semester.name.replace(spaceRegExp, "") + course.period + "-gradeSummary"] = {
                     prop: "name",
                     order: "down"
                 };
-                tableOrder[semester.name + course.period + "-totals"] = {
+                tableOrder[semester.name.replace(spaceRegExp, "") + course.period + "-totals"] = {
                     prop: "none",
                     order: "none"
                 };
@@ -460,7 +514,6 @@ $(document).ready(function () {
         assignmentsKeyMap = data.assignmentsKeyMap;
         gradeSummaryKeyMap = data.gradeSummaryKeyMap;       
         render();
-        console.log(data)
     }
 
     var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/get";

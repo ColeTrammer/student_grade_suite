@@ -58,6 +58,10 @@ table {
     align-items: center;
 }
 
+.card-header {
+    padding: 1% 1%;
+}
+
 a:hover {
     color: inherit;
     text-decoration: none;
@@ -86,15 +90,25 @@ a:focus {
     margin-bottom: 0;
 }
 
-.assignments-header, .summary-header {
+.assignments-header, .summary-header, .graph-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin: 0 1% 1.5%;
 }
 
-.assignments-header h3, .summary-header h3 {
+.assignments-header h3, .summary-header h3, .graph-header h3 {
     text-decoration: underline;
+}
+
+.graph {
+    margin: 0 1%;
+}
+
+.line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 2px;
 }
 
 .modal-footer {
@@ -106,7 +120,7 @@ table {
     width: 98%!important;
 }
 
-.summary-header {
+.summary-header, .assignments-header {
     margin-top: 1%;
 }
 
