@@ -1,57 +1,9 @@
 "use strict"
 
-const https = require("https")
-const fs = require("fs")
-const querystring = require("querystring")
 const async = require("async")
 const jsdom = require("jsdom")
+const util = require("./util.js")
 const { JSDOM } = jsdom
-
-function getValue(regEx, string) {
-    return string.match(regEx)[0].replace(regEx, "$1")
-}
-
-function get(options, cb) {
-    const req = https.request({
-        method: "GET",
-        hostname: options.hostname,
-        path: options.path,
-        headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36",
-            "Cookie": options.cookies ? options.cookies : ""
-        }
-    }, (res) => {
-        res.setEncoding("utf8")
-        let rawData = ""
-        res.on("data", (chunk) => { rawData += chunk; })
-        res.on("end", () => cb(rawData, res))
-    })
-
-    req.end()
-}
-
-function post(options, postData, cb) {
-    const data = querystring.stringify(postData)
-
-    const req = https.request({
-        method: "POST",
-        hostname: options.hostname,
-        path: options.path,
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Content-Length": Buffer.byteLength(data),
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36",
-            "Cookie": options.cookies ? options.cookies : ""
-        }
-    }, (res) => {
-        res.setEncoding("utf8")
-        let rawData = ""
-        res.on("data", (chunk) => { rawData += chunk; })
-        res.on("end", () => cb(rawData, res))
-    })
-    req.write(data)
-    req.end()
-}
 
 function getListOfSemesters(html, domain, cookies, done) {
     const { document } = new JSDOM(html).window
@@ -68,7 +20,7 @@ function getListOfSemesters(html, domain, cookies, done) {
                 })
                 cb()
             } else {
-                get({
+                util.get({
                     hostname: domain,
                     path: "/" + elem.firstElementChild.attributes.href.value,
                     cookies: cookies
@@ -198,23 +150,23 @@ function getGradeSummary(html) {
 }
 
 module.exports.getAll = (username, password, domain, done) => {
-    get({
+    util.get({
         hostname: domain,
         path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
     }, (rawData, res) => {
         const cookies = res.headers["set-cookie"][0].substring(0, 42)
-        post({
+        util.post({
             hostname: domain,
             path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
             cookies: cookies
         }, {
-            __VIEWSTATE: getValue(/"__VIEWSTATE" value="(.*)"/g, rawData),
-            __VIEWSTATEGENERATOR: getValue(/"__VIEWSTATEGENERATOR" value="(.*)"/g, rawData),
-            __EVENTVALIDATION: getValue(/"__EVENTVALIDATION" value="(.*)"/g, rawData),
+            __VIEWSTATE: util.getValue(/"__VIEWSTATE" value="(.*)"/g, rawData),
+            __VIEWSTATEGENERATOR: util.getValue(/"__VIEWSTATEGENERATOR" value="(.*)"/g, rawData),
+            __EVENTVALIDATION: util.getValue(/"__EVENTVALIDATION" value="(.*)"/g, rawData),
             username: username,
             password: password
         }, (rawData, res) => {
-            get({
+            util.get({
                 hostname: domain,
                 path: "/PXP_Gradebook.aspx?AGU=0",
                 cookies: cookies
@@ -311,7 +263,7 @@ module.exports.getAll = (username, password, domain, done) => {
                         const classes = getListOfClasses(semester.html)
     
                         async.each(classes, (class_, cb2) => {
-                            get({
+                            util.get({
                                 hostname: domain,
                                 path: class_.path,
                                 cookies: cookies
@@ -345,23 +297,23 @@ module.exports.getAll = (username, password, domain, done) => {
 }
 
 module.exports.getSemester = (username, password, domain, path, done) => {
-    get({
+    util.get({
         hostname: domain,
         path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
     }, (rawData, res) => {
         const cookies = res.headers["set-cookie"][0].substring(0, 42)
-        post({
+        util.post({
             hostname: domain,
             path: "/Login_Student_PXP.aspx?regenerateSessionId=True",
             cookies: cookies
         }, {
-            __VIEWSTATE: getValue(/"__VIEWSTATE" value="(.*)"/g, rawData),
-            __VIEWSTATEGENERATOR: getValue(/"__VIEWSTATEGENERATOR" value="(.*)"/g, rawData),
-            __EVENTVALIDATION: getValue(/"__EVENTVALIDATION" value="(.*)"/g, rawData),
+            __VIEWSTATE: util.getValue(/"__VIEWSTATE" value="(.*)"/g, rawData),
+            __VIEWSTATEGENERATOR: util.getValue(/"__VIEWSTATEGENERATOR" value="(.*)"/g, rawData),
+            __EVENTVALIDATION: util.getValue(/"__EVENTVALIDATION" value="(.*)"/g, rawData),
             username: username,
             password: password
         }, (rawData, res) => {
-            get({
+            util.get({
                 hostname: domain,
                 path: path,
                 cookies: cookies
@@ -372,7 +324,7 @@ module.exports.getSemester = (username, password, domain, path, done) => {
                     classes: []
                 }
                 async.each(classes, (class_, cb) => {
-                    get({
+                    util.get({
                         hostname: domain,
                         path: class_.path,
                         cookies: cookies

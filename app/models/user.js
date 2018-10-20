@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
     username: String,
     password: String,
     domain: String,
+    updating: Boolean,
     grades: mongoose.SchemaTypes.ObjectId
 })
 

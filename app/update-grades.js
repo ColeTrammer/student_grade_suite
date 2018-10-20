@@ -32,7 +32,8 @@ module.exports.updateSemester = (user, body, done) => {
                 grades.save((err) => {
                     if (err)
                         return done(err)
-                    done(null, user)
+                    user.updating = false
+                    user.save(done)
                 })
             })
         } else {

@@ -3,6 +3,7 @@ const User = require("../models/user.js")
 const Grade = require("../models/grades.js")
 const getGrades = require("../get-grades")
 const updateGrades = require("../update-grades")
+const checkAuth = require("../check-auth");
 
 module.exports = (passport) => {
     passport.serializeUser((user, done) => {
@@ -27,17 +28,20 @@ module.exports = (passport) => {
                     newUser.username = username
                     newUser.password = newUser.generateHash(password)
                     newUser.domain = req.body.domain
-                    return getGrades.getAll(username, password, req.body.domain, (err, grades) => {
-                        if (err) {
+                    return checkAuth.check(username, password, req.body.domain, (valid) => {
+                        if (!valid) {
                             req.flash("loginMessage", "Invalid username/password combination")
                             return done(null, false)
                         }
-                        Grade.create(grades, (err, grades) => {
-                            if (err)
-                                return done(err)
-                            newUser.grades = grades._id
-                            return newUser.save(done)
-                        })
+                        setTimeout(() => {
+                            getGrades.getAll(username, password, req.body.domain, (err, grades) => {
+                                Grade.create(grades, (err, grades) => {
+                                    newUser.grades = grades._id
+                                    newUser.save(() => {})
+                                })
+                            })
+                        }, 0)
+                        return newUser.save(done)
                     })
                 }
 
@@ -47,7 +51,11 @@ module.exports = (passport) => {
                 }
 
                 if (req.body.update === "on" && req.body.semester.length > 0) {
-                    return updateGrades.updateSemester(user, req.body, done)
+                    setTimeout(() => {
+                        updateGrades.updateSemester(user, req.body, () => {})
+                    }, 0)
+                    user.updating = true
+                    return user.save(done)
                 }
 
                 return done(null, user)

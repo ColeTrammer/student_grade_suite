@@ -326,8 +326,6 @@ $(document).ready(function () {
       
         g.append("g")
             .call(d3.axisLeft(y));
-
-        console.log(course.previous)
     }
 
     function render() {
@@ -435,13 +433,17 @@ $(document).ready(function () {
     }
 
     function initDisplay(data) {
+        if (data.error) {
+            console.log(data.error);
+            return setTimeout(getGradeData, 2000);
+        }
         data.semesters.sort(function (a, b) {
             return a.name.toUpperCase() > b.name.toUpperCase() ? 1 : -1;
         });
         var currentSemesterPath = localStorage.getItem("elocGrades-currentSemesterPath") || data.semesters[0].path;
         currentSemester = data.semesters.find(function(semester) {
             return semester.path === currentSemesterPath;
-        });
+        }) || data.semesters[0];
         localStorage.setItem("elocGrades-currentSemesterPath", currentSemester.path);
         var semesterSelectLink = document.getElementById("semester-select-link");
         semesterSelectLink.innerHTML = currentSemester.name;
@@ -517,13 +519,16 @@ $(document).ready(function () {
     }
 
     var apiUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/get";
+    function getGradeData() {
+        $.ajax({
+            url: apiUrl,
+            error: function error(xhr, status, err) {
+                console.log(status + JSON.stringify(err));
+            },
+            success: initDisplay
+        });
+    }
 
-    $.ajax({
-        url: apiUrl,
-        error: function error(xhr, status, err) {
-            $("#main").html(status + JSON.stringify(err));
-        },
-        success: initDisplay
-    });
+    getGradeData();
 });
 
